@@ -1,103 +1,111 @@
-"""
-Gemini AI 交互核心引擎
-负责与 Google Gemini API 的所有交互
-"""
+# backend/app/services/llm_engine.py
+
 import os
+import json
+import logging
+from datetime import datetime
 import google.generativeai as genai
-from typing import Optional, List, Dict
 from dotenv import load_dotenv
 
+# Import our rigid data structure
+from app.schemas import TripPlan, GeoLocation
+
+# Load environment variables
 load_dotenv()
 
+# Configure Logging
+logger = logging.getLogger(__name__)
 
-class GeminiEngine:
-    """Gemini AI 引擎"""
-    
-    def __init__(self):
-        """初始化 Gemini 客户端"""
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables")
-        
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
-        self.chat = None
-    
-    async def generate_plan(self, user_input: str, context: Optional[Dict] = None) -> str:
-        """
-        根据用户输入生成生活规划
-        
-        Args:
-            user_input: 用户的需求描述
-            context: 上下文信息
-            
-        Returns:
-            生成的计划（JSON 字符串）
-        """
-        # 构建 prompt
-        prompt = self._build_prompt(user_input, context)
-        
-        # 调用 Gemini API
-        response = self.model.generate_content(prompt)
-        
-        return response.text
-    
-    async def chat_conversation(self, message: str, history: Optional[List[Dict]] = None) -> str:
-        """
-        对话式交互
-        
-        Args:
-            message: 用户消息
-            history: 对话历史
-            
-        Returns:
-            AI 回复
-        """
-        if not self.chat:
-            self.chat = self.model.start_chat(history=history or [])
-        
-        response = self.chat.send_message(message)
-        return response.text
-    
-    def _build_prompt(self, user_input: str, context: Optional[Dict] = None) -> str:
-        """
-        构建发送给 Gemini 的提示词
-        
-        Args:
-            user_input: 用户输入
-            context: 上下文
-            
-        Returns:
-            完整的 prompt
-        """
-        base_prompt = f"""
-你是一个专业的生活规划助手。请根据用户的需求，生成一个详细的生活计划。
+# Initialize Gemini Client
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    logger.error("GEMINI_API_KEY not found in environment variables.")
 
-用户需求：{user_input}
+genai.configure(api_key=GEMINI_API_KEY)
 
-请以 JSON 格式返回计划，包含以下字段：
-- plan_id: 计划唯一标识
-- title: 计划标题
-- description: 计划描述
-- tasks: 任务列表
-  - id: 任务ID
-  - title: 任务标题
-  - description: 任务描述
-  - start_time: 开始时间（ISO 格式）
-  - end_time: 结束时间（ISO 格式）
-  - priority: 优先级（low/medium/high）
-  - status: 状态（pending）
-  - location: 地点（如果适用）
+# --- SYSTEM PROMPT DEFINITION ---
+# This acts as the "Constitution" for the AI Agent.
+# It enforces the role of a Senior Travel Architect.
+SYSTEM_INSTRUCTION = """
+You are a Senior Travel Architect & Life Planner AI.
+Your goal is to create a detailed, executable trip plan based on user requests.
 
-请确保生成的计划合理、可执行。
+CRITICAL OUTPUT RULES:
+1. You MUST output a single valid JSON object.
+2. The JSON MUST strictly match the 'TripPlan' schema structure.
+3. 'reasoning_path': Before planning, explain your logic here. Why this location? Why this time?
+4. 'risk_score': For each activity, estimate a risk score (0.0 - 1.0). 
+   - Indoor/Low stakes = 0.1
+   - Outdoor/Weather dependent = 0.8
+   - Tight schedule = 0.6
+5. 'alternatives': Always provide 1-2 backup options for high-risk activities.
+6. 'status': Always set initial status to 'draft'.
+
+CURRENT CONTEXT:
+- Today's Date: {current_date}
+- User Location: {user_location_str}
 """
+
+class LLMEngine:
+    def __init__(self):
+        # We use gemini-1.5-pro for complex reasoning and JSON adherence
+        self.model = genai.GenerativeModel(
+            model_name="gemini-1.5-pro-latest",
+            system_instruction=SYSTEM_INSTRUCTION.format(
+                current_date=datetime.now().strftime("%Y-%m-%d %A"),
+                user_location_str="Unknown" # Default, can be updated per request
+            )
+        )
+
+    def generate_plan(self, user_query: str, user_location: GeoLocation = None) -> TripPlan:
+        """
+        Orchestrates the LLM call to convert natural language into a structured TripPlan.
+        """
         
-        if context:
-            base_prompt += f"\n\n上下文信息：{context}"
+        # 1. Construct the prompt with dynamic context
+        location_str = f"{user_location.address} ({user_location.lat}, {user_location.lng})" if user_location else "Unknown"
         
-        return base_prompt
+        # We reinforce the schema requirement in the user prompt as well
+        prompt = f"""
+        User Request: "{user_query}"
+        User Current Location: {location_str}
 
+        Task: Generate a full TripPlan JSON. 
+        Ensure 'plan_id' is a unique UUID string.
+        Ensure 'status' is 'draft'.
+        """
 
-# 单例模式
-gemini_engine = GeminiEngine()
+        try:
+            logger.info(f"Sending request to Gemini: {user_query}")
+            
+            # 2. Call Gemini with JSON enforcement
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "response_mime_type": "application/json",
+                    "temperature": 0.7, # Slightly creative but grounded
+                }
+            )
 
+            # 3. Parse and Validate
+            # The response.text is a JSON string. We parse it into a dict, 
+            # then feed it to Pydantic for rigorous validation.
+            raw_json = json.loads(response.text)
+            
+            logger.info("Gemini response received. Validating against Schema...")
+            
+            # This step will raise an error if Gemini hallucinated a bad field
+            validated_plan = TripPlan(**raw_json)
+            
+            logger.info(f"Plan generated successfully: {validated_plan.plan_id}")
+            return validated_plan
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode JSON from Gemini: {e}")
+            raise ValueError("AI generated invalid JSON format.")
+        except Exception as e:
+            logger.error(f"LLM Engine Error: {e}")
+            raise e
+
+# Singleton instance for easy import
+llm_engine = LLMEngine()
