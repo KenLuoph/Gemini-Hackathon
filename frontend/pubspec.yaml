@@ -1,5 +1,5 @@
 name: gemini_life_planner
-description: 基于 Gemini AI 的智能生活规划助手
+description: AI-powered trip planning with real-time monitoring
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,41 +10,49 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # UI 组件
-  cupertino_icons: ^1.0.2
-  
-  # 网络请求
-  http: ^1.1.0
-  dio: ^5.4.0
-  
-  # 状态管理
+  # State Management
   provider: ^6.1.1
   
-  # JSON 序列化
+  # HTTP Client
+  http: ^1.1.0
+  
+  # WebSocket
+  web_socket_channel: ^2.4.0
+  
+  # JSON Serialization
   json_annotation: ^4.8.1
   
-  # 本地存储
-  shared_preferences: ^2.2.2
-  
-  # 日期时间处理
+  # Date/Time
   intl: ^0.18.1
+  
+  # UI Components
+  flutter_svg: ^2.0.9
+  
+  # Icons
+  cupertino_icons: ^1.0.6
+
+  url_launcher: ^6.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   
-  flutter_lints: ^3.0.1
-  build_runner: ^2.4.7
+  # JSON Code Generation
+  build_runner: ^2.4.6
   json_serializable: ^6.7.1
+  
+  # Linting
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
   
+  # Assets (uncomment when needed)
   # assets:
-  #   - images/
-  
-  # fonts:
-  #   - family: CustomFont
-  #     fonts:
-  #       - asset: fonts/CustomFont-Regular.ttf
+  #   - assets/images/
+  #   - assets/icons/
 
+# App configuration
+flutter_gen:
+  output: lib/gen/
+  line_length: 80
