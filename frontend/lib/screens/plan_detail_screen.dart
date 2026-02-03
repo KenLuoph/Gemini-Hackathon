@@ -248,7 +248,7 @@ class PlanDetailScreen extends StatelessWidget {
               ...validation.violations.map((v) => Padding(
                     padding: const EdgeInsets.only(top: 4, left: 16),
                     child: Text('• $v'),
-                  )),
+                  ),),
             ],
 
             // Warnings
@@ -264,7 +264,7 @@ class PlanDetailScreen extends StatelessWidget {
                       '• $w',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
-                  )),
+                  ),),
             ],
           ],
         ),
@@ -301,7 +301,7 @@ class PlanDetailScreen extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

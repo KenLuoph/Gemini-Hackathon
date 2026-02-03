@@ -174,10 +174,15 @@ class WebSocketMessage {
   bool get isStatusChange => type == 'status_change';
 
   /// Parse as AlertSignal (if type is 'alert')
+  /// Backend sends { "type": "alert", "data": { ...alert fields } }
   AlertSignal? get asAlert {
     if (isAlert || isPlanUpdate) {
       try {
-        return AlertSignal.fromJson(data['alert'] as Map<String, dynamic>);
+        final alertMap = data['alert'] ?? data;
+        if (alertMap is Map<String, dynamic>) {
+          return AlertSignal.fromJson(alertMap);
+        }
+        return null;
       } catch (e) {
         return null;
       }
@@ -189,7 +194,11 @@ class WebSocketMessage {
   TripPlan? get asUpdatedPlan {
     if (isPlanUpdate) {
       try {
-        return TripPlan.fromJson(data['updated_plan'] as Map<String, dynamic>);
+        final planMap = data['updated_plan'] ?? data;
+        if (planMap is Map<String, dynamic>) {
+          return TripPlan.fromJson(planMap);
+        }
+        return null;
       } catch (e) {
         return null;
       }

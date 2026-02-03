@@ -21,15 +21,17 @@ class AlertSignal {
     required this.timestamp,
   });
 
-  /// Create from JSON
+  /// Create from JSON (handles partial payload from WebSocket test/mock)
   factory AlertSignal.fromJson(Map<String, dynamic> json) {
     return AlertSignal(
-      source: json['source'] as String? ?? 'UNKNOWN',
-      changeType: json['change_type'] as String,
-      message: json['message'] as String,
-      triggerValue: json['trigger_value'] as String,
-      severity: AlertSeverity.fromString(json['severity'] as String),
-      affectedPlanId: json['affected_plan_id'] as String,
+      source: json['source'] as String? ?? 'SCOUT_AGENT',
+      changeType: json['change_type'] as String? ?? 'weather',
+      message: json['message'] as String? ?? '',
+      triggerValue: json['trigger_value'] as String? ?? '',
+      severity: AlertSeverity.fromString(
+          (json['severity'] as String?) ?? 'INFO',
+      ),
+      affectedPlanId: json['affected_plan_id'] as String? ?? '',
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'] as String)
           : DateTime.now(),

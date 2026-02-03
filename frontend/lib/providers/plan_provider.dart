@@ -4,7 +4,7 @@ import '../models/trip_plan.dart';
 import '../models/validation_result.dart';
 import '../models/alert_signal.dart';
 import '../models/plan_status.dart';
-import '../models/alert_severity.dart'; 
+import '../models/alert_severity.dart';
 import '../services/api_client.dart';
 import '../services/websocket_service.dart';
 
@@ -50,11 +50,36 @@ class PlanProvider extends ChangeNotifier {
   bool get hasPlan => _currentPlan != null;
   bool get hasError => _errorMessage != null;
   bool get hasAlerts => _alerts.isNotEmpty;
-  
+
   /// Has critical alerts
   bool get hasCriticalAlert {
     return _alerts.any((alert) => alert.severity == AlertSeverity.critical);
   }
+
+  /// List of plans for Plans tab: current (from API) + mock completed/draft
+  List<TripPlan> get displayPlans {
+    final list = <TripPlan>[];
+    if (_currentPlan != null) list.add(_currentPlan!);
+    list.addAll(_mockPlans);
+    return list;
+  }
+
+  static final List<TripPlan> _mockPlans = [
+    const TripPlan(
+      planId: 'mock_completed',
+      name: "Sunday Farmer's Market",
+      status: PlanStatus.completed,
+      mainItinerary: const [],
+      alternatives: const [],
+    ),
+    const TripPlan(
+      planId: 'mock_draft',
+      name: 'Napa Valley Day Trip',
+      status: PlanStatus.draft,
+      mainItinerary: const [],
+      alternatives: const [],
+    ),
+  ];
 
   // ========================================================================
   // ACTIONS

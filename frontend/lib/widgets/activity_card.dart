@@ -62,7 +62,7 @@ class ActivityCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Color(
                         int.parse('0xff${activity.riskColorHex.substring(1)}'),
-                      ).withOpacity(0.2),
+                      ).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

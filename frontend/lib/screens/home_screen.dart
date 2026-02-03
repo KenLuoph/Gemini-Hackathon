@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../providers/plan_provider.dart';
 import '../config/app_config.dart';
 import 'loading_screen.dart';
 
@@ -60,28 +58,20 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final provider = context.read<PlanProvider>();
-
     // Parse budget
     final budget = double.tryParse(_budgetController.text);
 
-    // Navigate to loading screen
+    // Navigate to loading screen (it will call createPlan with these params)
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const LoadingScreen(),
+        builder: (context) => LoadingScreen(
+          intent: _intentController.text,
+          budgetLimit: budget,
+          preferences: _selectedPreferences.toList(),
+          sensitiveToRain: _sensitiveToRain,
+        ),
       ),
-    );
-
-    // Create plan
-    provider.createPlan(
-      intent: _intentController.text,
-      budgetLimit: budget,
-      preferences: _selectedPreferences.toList(),
-      sensitiveToRain: _sensitiveToRain,
-      dietaryRestrictions: _dietaryRestrictions.isNotEmpty
-          ? _dietaryRestrictions.toList()
-          : null,
     );
   }
 
