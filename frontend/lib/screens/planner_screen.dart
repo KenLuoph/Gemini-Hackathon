@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../ui/app_theme.dart';
 
-/// Planner screen with smooth animations and elastic scrolling
+/// Planner screen with card-based layout and smooth animations
 class PlannerScreen extends StatefulWidget {
   final void Function(String intent, {double? budgetLimit, List<String>? preferences, bool? sensitiveToRain}) onGenerate;
 
@@ -58,41 +58,32 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomNavHeight = 80.0;
+    final availableHeight = screenHeight - MediaQuery.of(context).padding.top - bottomNavHeight;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(), // ✅ iOS 风格弹性滚动
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Main Card with parallax effect
-                          Transform.translate(
-                            offset: Offset(0, -_scrollOffset * 0.3), // ✅ 视差效果
-                            child: _buildMainCard(),
-                          ),
-                          
-                          const SizedBox(height: 80), // ✅ 底部留白，增强滚动感
-                        ],
-                      ),
-                    ),
-                  ),
+        bottom: false, // Allow content to extend behind bottom nav
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          child: Container(
+            constraints: BoxConstraints(
+              minHeight: availableHeight,
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120), // Extra bottom padding
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Transform.translate(
+                  offset: Offset(0, -_scrollOffset * 0.3),
+                  child: _buildMainCard(),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
@@ -102,7 +93,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 600),
       tween: Tween(begin: 0.95, end: 1.0),
-      curve: Curves.easeOutBack, // ✅ 回弹曲线
+      curve: Curves.easeOutBack,
       builder: (context, scale, child) {
         return Transform.scale(
           scale: scale,
@@ -130,11 +121,11 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
 
             // Content Area
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // "What's the plan?"
+                  // What's the plan label
                   const Text(
                     "What's the plan?",
                     style: TextStyle(
@@ -148,9 +139,9 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                   // Input field
                   _buildInputField(),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Advanced Options
+                  // Advanced Options label
                   const Text(
                     'Advanced Options',
                     style: TextStyle(
@@ -161,13 +152,14 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                   ),
                   const SizedBox(height: 12),
 
-                  // Option chips
+                  // Option chips row
                   Row(
                     children: [
                       Expanded(
                         child: _OptionChip(
                           icon: Icons.umbrella,
-                          label: 'Rain sensitive',
+                          label: 'Rain',
+                          subtitle: 'sensitive',
                           selected: _sensitiveToRain,
                           onTap: () => setState(() => _sensitiveToRain = !_sensitiveToRain),
                         ),
@@ -177,6 +169,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                         child: _OptionChip(
                           icon: Icons.accessible,
                           label: 'Wheelchair',
+                          subtitle: null,
                           selected: _wheelchairAccessible,
                           onTap: () => setState(() => _wheelchairAccessible = !_wheelchairAccessible),
                         ),
@@ -184,7 +177,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                     ],
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // Generate button
                   _buildGenerateButton(),
@@ -200,7 +193,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
   Widget _buildAnimatedHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -215,19 +208,19 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 1200),
             tween: Tween(begin: 0.0, end: 1.0),
-            curve: Curves.elasticOut, // ✅ 弹性动画
+            curve: Curves.elasticOut,
             builder: (context, value, child) {
               return Transform.rotate(
-                angle: value * math.pi * 2, // 旋转一圈
+                angle: value * math.pi * 2,
                 child: Transform.scale(
-                  scale: 0.5 + (value * 0.5), // 从小到大
+                  scale: 0.5 + (value * 0.5),
                   child: child,
                 ),
               );
             },
             child: Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
@@ -241,7 +234,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
               ),
               child: const Icon(
                 Icons.auto_awesome,
-                size: 40,
+                size: 36,
                 color: Colors.white,
               ),
             ),
@@ -250,11 +243,13 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
           
           // Title
           const Text(
-            'Gemini Life Assistant',
+            'Gemini Life\nAssistant',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
@@ -263,7 +258,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
           Text(
             'AI-Powered Planning',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: Colors.white.withOpacity(0.9),
             ),
           ),
@@ -284,9 +279,9 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
           // Text input
           TextField(
             controller: _inputController,
-            maxLines: 4,
+            maxLines: 3,
             decoration: const InputDecoration(
-              hintText: '✨ Describe what you want to do...',
+              hintText: 'Describe what you want to do...',
               hintStyle: TextStyle(
                 color: Color(0xFF94A3B8),
                 fontSize: 15,
@@ -296,12 +291,15 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
             ),
           ),
           
-          // ✅ 可横向滚动的 Quick suggestions
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Row(
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          
+          // Quick suggestions with horizontal scroll
+          SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
                 _QuickChip(
                   icon: '🌹',
@@ -323,26 +321,34 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                 const SizedBox(width: 8),
                 _QuickChip(
                   icon: '🎭',
-                  label: 'Night out',
-                  onTap: () => setState(() => _inputController.text = 'Plan a night out'),
+                  label: 'Show',
+                  onTap: () => setState(() => _inputController.text = 'Plan a show'),
+                ),
+                const SizedBox(width: 8),
+                _QuickChip(
+                  icon: '🎨',
+                  label: 'Museum',
+                  onTap: () => setState(() => _inputController.text = 'Visit museums'),
                 ),
                 const SizedBox(width: 8),
                 // Mic button
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
+                  margin: const EdgeInsets.only(left: 4, top: 2, bottom: 2),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.mic, size: 18),
+                    icon: const Icon(Icons.mic, size: 16),
                     color: const Color(0xFF94A3B8),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
                   ),
                 ),
+                const SizedBox(width: 12),
               ],
             ),
           ),
@@ -354,7 +360,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
   Widget _buildGenerateButton() {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 2000),
-      tween: Tween(begin: 1.0, end: 1.05),
+      tween: Tween(begin: 1.0, end: 1.03),
       curve: Curves.easeInOut,
       builder: (context, scale, child) {
         return Transform.scale(
@@ -363,14 +369,11 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
         );
       },
       onEnd: () {
-        // Restart animation
-        if (mounted) {
-          setState(() {});
-        }
+        if (mounted) setState(() {});
       },
       child: SizedBox(
         width: double.infinity,
-        height: 56,
+        height: 54,
         child: ElevatedButton(
           onPressed: () {
             final intent = _inputController.text.trim();
@@ -379,6 +382,7 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
                 SnackBar(
                   content: const Text('Please describe what you want to do'),
                   behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -400,19 +404,20 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            elevation: 4,
+            elevation: 0,
             shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               Icon(Icons.auto_awesome, size: 20),
-              SizedBox(width: 8),
+              SizedBox(width: 10),
               Text(
                 'Generate Smart Plan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
@@ -423,9 +428,9 @@ class _PlannerScreenState extends State<PlannerScreen> with TickerProviderStateM
   }
 }
 
-// ==================== Helper Widgets ====================
+// Helper Widgets
 
-/// Quick suggestion chip
+/// Quick suggestion chip with press animation
 class _QuickChip extends StatefulWidget {
   final String icon;
   final String label;
@@ -490,16 +495,18 @@ class _QuickChipState extends State<_QuickChip> {
   }
 }
 
-/// Option chip (Rain sensitive, Wheelchair)
+/// Option chip with selection state and animation
 class _OptionChip extends StatefulWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final bool selected;
   final VoidCallback onTap;
 
   const _OptionChip({
     required this.icon,
     required this.label,
+    this.subtitle,
     required this.selected,
     required this.onTap,
   });
@@ -544,7 +551,7 @@ class _OptionChipState extends State<_OptionChip> with SingleTickerProviderState
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             gradient: widget.selected
                 ? const LinearGradient(
@@ -567,6 +574,7 @@ class _OptionChipState extends State<_OptionChip> with SingleTickerProviderState
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 widget.icon,
@@ -575,14 +583,31 @@ class _OptionChipState extends State<_OptionChip> with SingleTickerProviderState
               ),
               const SizedBox(width: 8),
               Flexible(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: widget.selected ? FontWeight.w600 : FontWeight.normal,
-                    color: widget.selected ? Colors.white : const Color(0xFF64748B),
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w500,
+                        color: widget.selected ? Colors.white : const Color(0xFF64748B),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.subtitle != null)
+                      Text(
+                        widget.subtitle!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: widget.selected 
+                              ? Colors.white.withOpacity(0.8) 
+                              : const Color(0xFF94A3B8),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
                 ),
               ),
             ],
