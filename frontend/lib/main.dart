@@ -36,8 +36,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Main shell: bottom nav (Notes, Calendar, Planner FAB, Plans, Settings),
-/// notification banner, demo mode banner, plan detail overlay
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -46,7 +44,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 2; // Planner is center (index 2)
+  int _currentIndex = 2; // Default to Planner
   TripPlan? _selectedPlan;
   bool _isDemoMode = false;
   ({String title, String msg, String type, String? source})? _notification;
@@ -54,7 +52,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    // Simulate notification after 8s (matching React)
+    // Simulate a background alert update after 8 seconds
     Future.delayed(const Duration(seconds: 8), () {
       if (mounted) {
         setState(() {
@@ -84,21 +82,12 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  void _onOpenPlan(TripPlan plan) {
-    setState(() => _selectedPlan = plan);
-  }
-
-  void _onClosePlanDetail() {
-    setState(() => _selectedPlan = null);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.slate50,
       body: Stack(
         children: [
-          // Content
           IndexedStack(
             index: _currentIndex,
             children: [
@@ -109,7 +98,7 @@ class _MainShellState extends State<MainShell> {
                   _onGeneratePlan(intent, budgetLimit: budgetLimit, preferences: preferences, sensitiveToRain: sensitiveToRain);
                 },
               ),
-              PlansScreen(onOpenPlan: _onOpenPlan),
+              PlansScreen(onOpenPlan: (plan) => setState(() => _selectedPlan = plan)),
               SettingsScreen(
                 isDemoMode: _isDemoMode,
                 onDemoModeChanged: (v) => setState(() => _isDemoMode = v),
@@ -117,168 +106,120 @@ class _MainShellState extends State<MainShell> {
             ],
           ),
 
-          // Demo mode banner
-          if (_isDemoMode)
-            const Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Material(
-                color: AppTheme.amber100,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 6),
-                    child: Center(
-                      child: Text(
-                        '🎯 DEMO MODE ACTIVE',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.amber800),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // Demo Mode Indicator
+          if (_isDemoMode) _buildDemoBanner(),
 
-          // Notification banner
-          if (_notification != null)
-            Positioned(
-              top: _isDemoMode ? 36 : 0,
-              left: 0,
-              right: 0,
-              child: Material(
-                color: _notification!.type == 'warning' ? Colors.amber : Colors.blue,
-                elevation: 4,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          _notification!.type == 'warning' ? Icons.warning_amber : Icons.info,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _notification!.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              if (_notification!.source != null) ...[
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'Triggered by: ${_notification!.source}',
-                                    style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 4),
-                              Text(
-                                _notification!.msg,
-                                style: const TextStyle(fontSize: 12, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => setState(() => _notification = null),
-                          icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // Notification Alert Overlay
+          if (_notification != null) _buildNotificationBanner(),
 
-          // Plan detail overlay
+          // Detail View Overlay
           if (_selectedPlan != null)
             Positioned.fill(
               child: PlanDetailView(
                 plan: _selectedPlan!,
-                onClose: _onClosePlanDetail,
+                onClose: () => setState(() => _selectedPlan = null),
                 isDemoMode: _isDemoMode,
               ),
             ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 80,
-        padding: const EdgeInsets.only(bottom: 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppTheme.slate100)),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildDemoBanner() {
+    return Positioned(
+      top: 0, left: 0, right: 0,
+      child: Material(
+        color: AppTheme.amber100,
+        child: SafeArea(
+          bottom: false,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            alignment: Alignment.center,
+            child: const Text(
+              '🎯 DEMO MODE ACTIVE',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.amber800),
+            ),
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavItem(
-              icon: Icons.edit_note,
-              label: 'Notes',
-              selected: _currentIndex == 0,
-              onTap: () => setState(() => _currentIndex = 0),
-            ),
-            _NavItem(
-              icon: Icons.calendar_today,
-              label: 'Calendar',
-              selected: _currentIndex == 1,
-              onTap: () => setState(() => _currentIndex = 1),
-            ),
-            // Center FAB
-            const SizedBox(width: 64),
-            GestureDetector(
-              onTap: () => setState(() => _currentIndex = 2),
-              child: Transform.translate(
-                offset: const Offset(0, -24),
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.indigo500.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBanner() {
+    return Positioned(
+      top: _isDemoMode ? 36 : 0, left: 0, right: 0,
+      child: Material(
+        color: _notification!.type == 'warning' ? Colors.amber : Colors.blue,
+        elevation: 8,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(_notification!.type == 'warning' ? Icons.warning_amber : Icons.info, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_notification!.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(_notification!.msg, style: const TextStyle(fontSize: 12, color: Colors.white)),
                     ],
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 28, color: Colors.white),
                 ),
-              ),
+                IconButton(
+                  onPressed: () => setState(() => _notification = null),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                ),
+              ],
             ),
-            const SizedBox(width: 64),
-            _NavItem(
-              icon: Icons.assignment,
-              label: 'Plans',
-              selected: _currentIndex == 3,
-              onTap: () => setState(() => _currentIndex = 3),
-            ),
-            _NavItem(
-              icon: Icons.settings,
-              label: 'Settings',
-              selected: _currentIndex == 4,
-              onTap: () => setState(() => _currentIndex = 4),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppTheme.slate100)),
+      ),
+      child: Row(
+        // Distribute space equally using Expanded to prevent layout overflow
+        children: [
+          Expanded(child: _NavItem(icon: Icons.edit_note, label: 'Notes', selected: _currentIndex == 0, onTap: () => setState(() => _currentIndex = 0))),
+          Expanded(child: _NavItem(icon: Icons.calendar_today, label: 'Calendar', selected: _currentIndex == 1, onTap: () => setState(() => _currentIndex = 1))),
+          
+          // Smart Planning FAB Center Space
+          Expanded(
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: -20,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _currentIndex = 2),
+                    child: Container(
+                      width: 60, height: 60,
+                      decoration: BoxDecoration(gradient: AppTheme.primaryGradient, shape: BoxShape.circle),
+                      child: const Icon(Icons.auto_awesome, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(child: _NavItem(icon: Icons.assignment, label: 'Plans', selected: _currentIndex == 3, onTap: () => setState(() => _currentIndex = 3))),
+          Expanded(child: _NavItem(icon: Icons.settings, label: 'Settings', selected: _currentIndex == 4, onTap: () => setState(() => _currentIndex = 4))),
+        ],
       ),
     );
   }
@@ -290,39 +231,18 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: selected ? AppTheme.indigo600 : AppTheme.slate400,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? AppTheme.indigo600 : AppTheme.slate400,
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: selected ? AppTheme.indigo600 : AppTheme.slate400),
+          Text(label, style: TextStyle(fontSize: 10, color: selected ? AppTheme.indigo600 : AppTheme.slate400)),
+        ],
       ),
     );
   }

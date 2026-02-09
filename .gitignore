@@ -40,3 +40,47 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Flutter (extended)
+# Build outputs
+**/build/
+**/.dart_tool/
+**/.packages
+
+# Generated files
+**/*.g.dart
+**/*.freezed.dart
+
+# IDE
+**/.idea/
+**/.vscode/
+**/*.swp
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/.generated/
+**/ios/Flutter/ephemeral/
+
+# Android
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+
+# Web
+**/web/.firebase/
+
+# Metadata
+**/.metadata

@@ -1,0 +1,98 @@
+# Gemini-Hackathon 项目文件结构
+# 生成时间: 2026-02-02
+
+Gemini-Hackathon/
+├── README.md
+├── project_structure.txt
+├── check_models.py
+├── who_am_i.py
+│
+├── backend/                          # FastAPI 后端
+│   ├── main.py                       # 应用入口、CORS、路由挂载
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── app/
+│       ├── __init__.py
+│       ├── config.py
+│       ├── agents/                   # 三阶段 Agent
+│       │   ├── __init__.py
+│       │   ├── base.py
+│       │   ├── scout.py
+│       │   ├── simulator.py
+│       │   └── validator.py
+│       ├── api/
+│       │   ├── __init__.py
+│       │   ├── routes.py             # REST + WebSocket 路由
+│       │   └── test_routes.py
+│       ├── schemas/
+│       │   ├── __init__.py
+│       │   ├── domain.py             # TripPlan, AlertSignal 等
+│       │   ├── events.py
+│       │   └── user.py
+│       ├── services/
+│       │   ├── __init__.py
+│       │   ├── llm_client.py
+│       │   ├── llm_engine.py
+│       │   ├── mock_manager.py
+│       │   ├── orchestrator.py       # 规划编排
+│       │   └── tools_definition.py
+│       └── tests/
+│           └── __init__.py
+│
+└── frontend/                         # Flutter 前端
+    ├── README.md
+    ├── pubspec.yaml
+    ├── pubspec.lock
+    ├── analysis_options.yaml
+    ├── test/
+    │   └── widget_test.dart
+    ├── web/
+    │   ├── index.html
+    │   ├── manifest.json
+    │   ├── favicon.png
+    │   └── icons/
+    ├── android/                     # Android 平台配置
+    ├── ios/                          # iOS 平台配置
+    ├── linux/                        # Linux 平台配置
+    ├── macos/                        # macOS 平台配置
+    ├── windows/                      # Windows 平台配置
+    │
+    └── lib/                          # 应用源码
+        ├── main.dart                 # 入口、MainShell、底部导航
+        ├── config.dart
+        ├── config/
+        │   └── app_config.dart       # API baseUrl、端点、超时
+        ├── models/
+        │   ├── activity_item.dart
+        │   ├── activity_type.dart
+        │   ├── alert_severity.dart
+        │   ├── alert_signal.dart
+        │   ├── budget_info.dart
+        │   ├── geo_location.dart
+        │   ├── plan_status.dart
+        │   ├── trip_plan.dart
+        │   └── validation_result.dart
+        ├── providers/
+        │   ├── app_state.dart
+        │   └── plan_provider.dart    # 计划状态、createPlan、confirmPlan、WebSocket
+        ├── services/
+        │   ├── api_client.dart       # POST /plan/generate, confirm, GET /plan/{id}
+        │   └── websocket_service.dart # ws/alerts/{plan_id}
+        ├── screens/
+        │   ├── calendar_screen.dart
+        │   ├── home_screen.dart
+        │   ├── loading_screen.dart   # 三阶段 Loading → PlanDetailView
+        │   ├── notes_screen.dart
+        │   ├── plan_detail_screen.dart
+        │   ├── plan_detail_view.dart # 计划详情、Confirm & Monitoring
+        │   ├── planner_screen.dart   # 输入意图、Generate Smart Plan
+        │   ├── plans_screen.dart     # 计划列表
+        │   └── settings_screen.dart
+        ├── ui/
+        │   ├── app_theme.dart
+        │   ├── badge_widget.dart
+        │   ├── glass_card.dart
+        │   └── theme.dart
+        └── widgets/
+            ├── activity_card.dart
+            └── alert_banner.dart
