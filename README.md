@@ -4,6 +4,8 @@ AI-powered trip planning with real-time monitoring. The backend uses a 3-phase w
 
 Interactive Demo(No AI Connected): https://rename-butter-12998403.figma.site
 
+Video Demo:https://youtu.be/CgicFXmAdtc
+
 ## Features
 
 - **Dynamic trip planning** — Generate day plans from natural-language intents (e.g. “romantic date in SF, budget $200”).
