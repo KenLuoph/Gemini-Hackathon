@@ -1,6 +1,7 @@
 # Gemini Life Planner
 
 AI-powered trip planning with real-time monitoring. The backend uses a 3-phase workflow (Scout → Simulator → Validator) driven by Google Gemini, and the Flutter app provides planning, alerts, and plan management.
+
 Interactive Demo(No AI Connected): https://rename-butter-12998403.figma.site
 
 ## Features
